@@ -100,7 +100,8 @@
   .matrix td.lbl { text-align: left; font-weight: 600; }
   /* map */
   #map { flex: 1; min-height: 300px; margin: 6px 12px 10px; border: 1px solid var(--border); }
-  .leaflet-container { font: inherit; background: #f3f2f1; }
+  .leaflet-container { font: inherit; background: #e8ecef; }
+  .leaflet-tile-pane { filter: grayscale(1) contrast(.85) brightness(1.08); opacity: .75; }
   .map-legend { background: #fff; padding: 6px 8px; font-size: 11px; border: 1px solid var(--border); line-height: 1.5; }
   .map-legend i { display: inline-block; width: 14px; height: 10px; margin-right: 4px; vertical-align: -1px; }
   /* page tabs (bottom) */
@@ -269,7 +270,7 @@ function mk(id) { if (!charts[id]) charts[id] = echarts.init(document.getElement
 
 /* ---------- KPI cards ---------- */
 function kpis() {
-  const k = D.kpi, n = k.length, now = k[n - 1], ly = k[n - 13];
+  const k = D.kpi, n = k.length, now = k[n - 1], ly = period === 12 ? k[n - 13] : k[0];
   const delta = (cur, prev, kind) => {
     let txt, up;
     if (kind === 'pts') { const d = (cur - prev) * 100; up = d >= 0; txt = (up ? '+' : '') + d.toFixed(1) + ' pts'; }
@@ -281,6 +282,9 @@ function kpis() {
     document.getElementById(id).textContent = val;
     const good = d.up === goodWhenUp;
     document.getElementById(id + '_d').innerHTML = `<span class="${good ? 'u' : 'd'}">${d.up ? '▲' : '▼'} ${d.txt}</span> vs ${longLab(ly.month)}`;
+    const lbl = document.getElementById(id).previousElementSibling;
+    if (!lbl.dataset.base) lbl.dataset.base = lbl.textContent;
+    lbl.textContent = lbl.dataset.base + ', ' + longLab(now.month);
   };
   put('k_subs', kfmt(now.subscribers_end), delta(now.subscribers_end, ly.subscribers_end), true);
   put('k_mrr', eur(now.mrr_eur), delta(now.mrr_eur, ly.mrr_eur), true);
@@ -377,9 +381,9 @@ function drawMap() {
   if (!map) {
     map = L.map('map', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.25 }).setView([52, 10], 3.4);
     map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 8, subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 8,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     legendCtl = L.control({ position: 'bottomright' });
     legendCtl.onAdd = () => { const d = L.DomUtil.create('div', 'map-legend'); d.innerHTML = '<b>Churn rate</b><div style="width:120px;height:10px;margin:4px 0 2px;background:linear-gradient(90deg,' + RAMP.join(',') + ')"></div><div style="display:flex;justify-content:space-between;width:120px"><span>' + pct(LO) + '</span><span>' + pct(HI) + '</span></div>'; return d; };
@@ -398,8 +402,9 @@ function drawMap() {
       layer.on('mouseout', e => geoLayer.resetStyle(e.target));
     }
   }).addTo(map);
-  if (!map._fitted) { map.fitBounds([[36.5, -9.8], [70.5, 30]], { padding: [4, 4] }); map._fitted = true; }
+  if (!map._fitted) { fitMap(); map._fitted = true; }
 }
+function fitMap() { if (!map) return; map.invalidateSize(); map.fitBounds([[36.0, -10.5], [71.0, 31.5]], { padding: [6, 6] }); }
 
 /* ---------- page 3 ---------- */
 let cohortCh = 'all';
@@ -480,6 +485,7 @@ const TITLES = { p1: ['Executive overview', 'Paying subscribers, revenue and ret
   p3: ['Acquisition and cohorts', 'How subscribers join and how long they stay'], p4: ['Pricing test and customer voice', 'December 2025 price test and exit survey'] };
 let current = 'p1';
 function render() {
+  kpis();
   if (current === 'p1') page1();
   if (current === 'p2') page2();
   if (current === 'p3') page3();
@@ -493,7 +499,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.getElementById('pageTitle').textContent = TITLES[current][0];
   document.querySelector('.band .subtitle').textContent = TITLES[current][1];
   render();
-  if (current === 'p2' && map) setTimeout(() => map.invalidateSize(), 50);
+  if (current === 'p2' && map) setTimeout(fitMap, 60);
 });
 document.querySelectorAll('[data-slicer="period"]').forEach(seg => seg.querySelectorAll('button').forEach(b => b.onclick = () => {
   period = +b.dataset.v;
@@ -522,16 +528,15 @@ document.querySelectorAll('.card:not(.kpi)').forEach(card => {
     document.querySelectorAll('.card.focus').forEach(c => c.classList.remove('focus'));
     card.classList.toggle('focus', on);
     document.getElementById('scrim').classList.toggle('on', on);
-    setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) map.invalidateSize(); }, 30);
+    setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) fitMap(); }, 30);
   };
 });
 document.getElementById('scrim').onclick = () => {
   document.querySelectorAll('.card.focus').forEach(c => c.classList.remove('focus'));
   document.getElementById('scrim').classList.remove('on');
-  setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) map.invalidateSize(); }, 30);
+  setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) fitMap(); }, 30);
 };
-window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
-kpis();
+window.addEventListener('resize', () => { Object.values(charts).forEach(c => c.resize()); if (current === 'p2') fitMap(); });
 render();
 </script>
 </body>
