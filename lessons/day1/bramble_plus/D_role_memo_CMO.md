@@ -14,8 +14,6 @@ You proposed the price cut to €9.99, and you believe the company's own data ba
 
 Move fast. Every month of delay hands subscribers to the rival. You see the ad tier as too slow (four months to build) and targeted offers as a half measure.
 
-**What you would rather not lead with**
-
-The spring 2026 influencer campaign was your flagship initiative and the reason spring was the best acquisition quarter in the company's history. It brought in subscribers on an introductory offer of **50% off for the first three months**, and your bonus this year is tied to total subscriber count. You are proud of the campaign and would prefer the discussion stay on price, not on which channels the new subscribers came from or how long they stayed.
+You also know what a sharper price can do, because you have seen it work. Spring 2026 was the best acquisition quarter in the company's history, driven by your influencer partnerships and an introductory offer of half price for the first three months that made signing up an easy yes. That campaign is why your subscriber target, and the bonus tied to it, looked safe in June. A permanent €9.99 price would, in your view, lock in the kind of growth spring proved is possible.
 
 You may change your mind if the evidence persuades you.

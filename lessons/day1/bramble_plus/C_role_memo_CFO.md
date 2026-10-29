@@ -13,10 +13,8 @@ Your job on Thursday is to protect revenue and margin. You are deeply skeptical 
 
 **Your instinct**
 
-You lean toward **holding course**. To you, the move from 4.1% to 4.6% churn looks like half a point of noise around a normal level, and you suspect the panic is being driven by one dramatic looking chart. If anything, you would rather cut marketing spend than cut price.
+You lean toward **holding course**. To you, the move from 4.1% to 4.6% churn looks like half a point of noise around a normal level, and you suspect the panic is being driven by one dramatic looking chart.
 
-**What you would rather not lead with**
-
-In May you approved a change to how churn is counted: subscribers who **pause** their account instead of cancelling no longer count as churned. It aligned the dashboard with investor reporting, and you still think it was the right call. But it means churn from May onward is not measured the same way as churn before May, and you are not keen to reopen that discussion in front of the board.
+You also take some comfort in how much cleaner the churn reporting has been since May, when your team brought the dashboard in line with investor reporting so that subscribers who pause their account are treated as retained rather than lost. The monthly figures have been steadier since then, which is one more reason you think the recent rise is being overstated. If anything, you would rather cut marketing spend than cut price.
 
 You may change your mind if the evidence persuades you.
