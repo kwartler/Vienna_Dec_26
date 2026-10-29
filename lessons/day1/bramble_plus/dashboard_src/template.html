@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bramble+ Subscriber Health</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    --plum-900: #2b1035;
+    --plum-800: #3b1748;
+    --plum-600: #5e2a6e;
+    --plum-100: #f1e9f4;
+    --lime: #bada55;
+    --canvas: #edebe9;
+    --card: #ffffff;
+    --border: #e1dfdd;
+    --text: #252423;
+    --text-2: #605e5c;
+    --text-3: #8a8886;
+    --s1: #2a78d6;
+    --s2: #eb6834;
+    --s3: #1baf7a;
+    --s4: #eda100;
+    --up: #107c10;
+    --down: #a4262c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--canvas);
+    color: var(--text);
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    display: flex; flex-direction: column;
+  }
+  /* app bar */
+  .appbar { background: var(--plum-900); color: #fff; height: 40px; display: flex; align-items: center; padding: 0 14px; gap: 14px; flex: none; }
+  .appbar .product { font-size: 12px; opacity: .8; letter-spacing: .2px; }
+  .appbar .sep { width: 1px; height: 18px; background: rgba(255,255,255,.25); }
+  .appbar .report { font-size: 14px; font-weight: 600; }
+  .appbar .spacer { flex: 1; }
+  .appbar .meta { font-size: 11.5px; opacity: .8; }
+  /* report header band */
+  .band { background: var(--plum-800); color: #fff; padding: 10px 18px; display: flex; align-items: center; gap: 16px; flex: none; border-bottom: 3px solid var(--lime); }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .wordmark { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+  .wordmark b { color: var(--lime); font-weight: 800; }
+  .band .title { font-size: 15px; font-weight: 600; }
+  .band .subtitle { font-size: 11.5px; opacity: .78; }
+  .band .spacer { flex: 1; }
+  /* slicers */
+  .slicers { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 10px 16px 0; }
+  .slicer { background: var(--card); border: 1px solid var(--border); border-radius: 2px; padding: 6px 10px 8px; min-width: 180px; }
+  .slicer label { display: block; font-size: 11px; color: var(--text-2); margin-bottom: 4px; font-weight: 600; }
+  .seg { display: flex; border: 1px solid #c8c6c4; border-radius: 2px; overflow: hidden; }
+  .seg button { flex: 1; border: 0; background: #fff; padding: 5px 10px; font: inherit; font-size: 12px; color: var(--text); cursor: pointer; border-right: 1px solid #c8c6c4; white-space: nowrap; }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--plum-800); color: #fff; }
+  .seg button:hover:not(.on) { background: var(--plum-100); }
+  select { width: 100%; font: inherit; font-size: 12px; padding: 5px 6px; border: 1px solid #c8c6c4; border-radius: 2px; background: #fff; color: var(--text); }
+  /* pages */
+  main { flex: 1; overflow: auto; }
+  .page { display: none; padding-bottom: 16px; }
+  .page.on { display: block; }
+  .grid { display: grid; gap: 12px; padding: 12px 16px 0; grid-template-columns: repeat(12, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.06); position: relative; min-width: 0; display: flex; flex-direction: column; }
+  .card h3 { margin: 0; padding: 9px 12px 0; font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .card .sub { padding: 2px 12px 0; font-size: 11px; color: var(--text-2); }
+  .card .chart { flex: 1; min-height: 240px; }
+  .card .foot { padding: 0 12px 8px; font-size: 10px; color: var(--text-3); line-height: 1.35; }
+  .vh { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+  .card:hover .vh { opacity: 1; }
+  .vh button { border: 0; background: transparent; cursor: pointer; padding: 3px 5px; color: var(--text-2); font-size: 12px; border-radius: 2px; }
+  .vh button:hover { background: #f3f2f1; }
+  .card.focus { position: fixed; inset: 60px 40px 50px; z-index: 50; box-shadow: 0 8px 40px rgba(0,0,0,.35); }
+  .scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 40; }
+  .scrim.on { display: block; }
+  .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c5 { grid-column: span 5; } .c6 { grid-column: span 6; }
+  .c7 { grid-column: span 7; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; } .c2 { grid-column: span 2; }
+  /* kpi cards */
+  .kpi { padding: 10px 14px 12px; }
+  .kpi .k-label { font-size: 12px; color: var(--text-2); }
+  .kpi .k-value { font-size: 30px; font-weight: 600; color: var(--plum-800); line-height: 1.15; margin-top: 4px; letter-spacing: -.5px; }
+  .kpi .k-delta { font-size: 11.5px; margin-top: 3px; color: var(--text-2); }
+  .kpi .k-delta .u { color: var(--up); font-weight: 600; }
+  .kpi .k-delta .d { color: var(--down); font-weight: 600; }
+  .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--lime); }
+  /* tables */
+  .tbl-wrap { overflow: auto; flex: 1; margin: 6px 12px 10px; max-height: 330px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th { position: sticky; top: 0; background: #fff; text-align: right; font-weight: 600; color: var(--text); padding: 6px 8px; border-bottom: 2px solid var(--plum-800); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 5px 8px; text-align: right; border-bottom: 1px solid #f3f2f1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tbody tr:nth-child(even) td { background: #faf9f8; }
+  tbody tr:hover td { background: var(--plum-100); }
+  .matrix td { text-align: center; padding: 4px 6px; }
+  .matrix td.lbl { text-align: left; font-weight: 600; }
+  /* map */
+  #map { flex: 1; min-height: 300px; margin: 6px 12px 10px; border: 1px solid var(--border); }
+  .leaflet-container { font: inherit; background: #f3f2f1; }
+  .map-legend { background: #fff; padding: 6px 8px; font-size: 11px; border: 1px solid var(--border); line-height: 1.5; }
+  .map-legend i { display: inline-block; width: 14px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+  /* page tabs (bottom) */
+  .tabs { flex: none; background: #f3f2f1; border-top: 1px solid var(--border); display: flex; align-items: stretch; height: 34px; padding-left: 8px; overflow-x: auto; }
+  .tabs button { border: 0; background: transparent; padding: 0 16px; font: inherit; font-size: 12.5px; color: var(--text-2); cursor: pointer; border-top: 3px solid transparent; white-space: nowrap; }
+  .tabs button.on { background: #fff; color: var(--text); font-weight: 600; border-top-color: var(--plum-800); }
+  .tabs button:hover:not(.on) { background: #e9e7e5; }
+  .tabs .zoom { margin-left: auto; padding: 0 14px; display: flex; align-items: center; font-size: 11.5px; color: var(--text-3); }
+  @media (max-width: 900px) {
+    .grid > * { grid-column: span 12 !important; }
+    .band .subtitle, .appbar .meta { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="appbar">
+  <span class="product">Bramble Analytics</span><span class="sep"></span>
+  <span class="report">Subscriber Health Report</span>
+  <span class="spacer"></span>
+  <span class="meta">Data refreshed 1 Nov 2026, 06:00 CET</span>
+</div>
+<div class="band">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+      <path d="M17 4 C21 2 26 3 28 6 C24 6 21 7 19 10 Z" fill="#bada55"/>
+      <circle cx="12" cy="15" r="4.2" fill="#7a3b8c"/><circle cx="20" cy="14" r="4.2" fill="#8f4aa2"/>
+      <circle cx="16" cy="21" r="4.2" fill="#6b2f7c"/><circle cx="24" cy="21" r="4.2" fill="#7a3b8c"/>
+      <circle cx="10" cy="22" r="4.2" fill="#8f4aa2"/><circle cx="18" cy="27.5" r="4.2" fill="#5e2a6e"/>
+    </svg>
+    <span class="wordmark">bramble<b>+</b></span>
+  </div>
+  <div>
+    <div class="title" id="pageTitle">Executive overview</div>
+    <div class="subtitle">Paying subscribers, revenue and retention, all markets</div>
+  </div>
+  <span class="spacer"></span>
+</div>
+
+<main>
+  <!-- PAGE 1 -->
+  <section class="page on" id="p1">
+    <div class="slicers">
+      <div class="slicer"><label>Period</label>
+        <div class="seg" data-slicer="period"><button data-v="24" class="on">Last 24 months</button><button data-v="12">Last 12 months</button></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card kpi c2"><div class="k-label">Subscribers</div><div class="k-value" id="k_subs"></div><div class="k-delta" id="k_subs_d"></div></div>
+      <div class="card kpi c2"><div class="k-label">Monthly recurring revenue</div><div class="k-value" id="k_mrr"></div><div class="k-delta" id="k_mrr_d"></div></div>
+      <div class="card kpi c2"><div class="k-label">Churn rate</div><div class="k-value" id="k_churn"></div><div class="k-delta" id="k_churn_d"></div></div>
+      <div class="card kpi c2"><div class="k-label">Average tenure</div><div class="k-value" id="k_ten"></div><div class="k-delta" id="k_ten_d"></div></div>
+      <div class="card kpi c2"><div class="k-label">New subscribers</div><div class="k-value" id="k_new"></div><div class="k-delta" id="k_new_d"></div></div>
+      <div class="card kpi c2"><div class="k-label">Customer acquisition cost</div><div class="k-value" id="k_cac"></div><div class="k-delta" id="k_cac_d"></div></div>
+
+      <div class="card c7"><h3>Monthly churn rate</h3><div class="sub">Cancellations as a share of subscribers at the start of each month</div>
+        <div class="chart" id="ch_churn" style="min-height:300px"></div>
+        <div class="foot">Churn rate = cancellations / opening subscribers. From 05/2026 paused accounts are reported as retained, aligned to investor reporting.</div></div>
+      <div class="card c5"><h3>Subscribers</h3><div class="sub">End of month, all plans</div><div class="chart" id="ch_subs" style="min-height:300px"></div></div>
+
+      <div class="card c6"><h3>New subscribers and cancellations</h3><div class="sub">Monthly counts</div><div class="chart" id="ch_flow"></div></div>
+      <div class="card c6"><h3>Monthly recurring revenue</h3><div class="sub">End of month, EUR</div><div class="chart" id="ch_mrr"></div></div>
+
+      <div class="card c12"><h3>Monthly subscriber detail</h3><div class="sub">All markets</div>
+        <div class="tbl-wrap"><table id="t_detail"></table></div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="page" id="p2">
+    <div class="slicers">
+      <div class="slicer"><label>Period</label>
+        <div class="seg" data-slicer="period"><button data-v="24" class="on">Last 24 months</button><button data-v="12">Last 12 months</button></div>
+      </div>
+      <div class="slicer"><label>Map month</label><select id="mapMonth"></select></div>
+      <div class="slicer"><label>Region</label><select id="regionSel"><option value="All">All</option></select></div>
+    </div>
+    <div class="grid">
+      <div class="card c5"><h3>Churn rate by region</h3><div class="sub">Selected month. Click a region to highlight it.</div><div id="map"></div></div>
+      <div class="card c7"><h3>Churn rate by region over time</h3><div class="sub">Monthly</div><div class="chart" id="ch_region" style="min-height:330px"></div></div>
+      <div class="card c6"><h3>Churn rate by plan</h3><div class="sub">Monthly and annual plans</div><div class="chart" id="ch_plan"></div></div>
+      <div class="card c6"><h3>Churn rate by acquisition channel</h3><div class="sub">Channel through which the subscriber first joined</div><div class="chart" id="ch_channel"></div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 3 -->
+  <section class="page" id="p3">
+    <div class="slicers">
+      <div class="slicer"><label>Period</label>
+        <div class="seg" data-slicer="period"><button data-v="24" class="on">Last 24 months</button><button data-v="12">Last 12 months</button></div>
+      </div>
+      <div class="slicer" style="min-width:420px"><label>Acquisition channel (cohort table)</label>
+        <div class="seg" id="cohortCh"><button data-v="all" class="on">All</button><button data-v="organic">Organic</button><button data-v="paid_search">Paid search</button><button data-v="referral">Referral</button><button data-v="influencer">Influencer</button></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card c7"><h3>New subscribers by acquisition channel</h3><div class="sub">Monthly</div><div class="chart" id="ch_adds" style="min-height:300px"></div></div>
+      <div class="card c5"><h3>Customer acquisition cost</h3><div class="sub">Marketing spend per new subscriber, EUR</div><div class="chart" id="ch_cac" style="min-height:300px"></div></div>
+      <div class="card c8"><h3>Cohort retention</h3><div class="sub">Share of each signup month's subscribers still active, by months since signup</div>
+        <div class="tbl-wrap"><table class="matrix" id="t_cohort"></table></div></div>
+      <div class="card c4"><h3>Average subscriber tenure</h3><div class="sub">Months, active subscribers</div><div class="chart" id="ch_ten"></div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 4 -->
+  <section class="page" id="p4">
+    <div class="grid">
+      <div class="card kpi c3"><div class="k-label">Churn at €9.99 (test)</div><div class="k-value" id="k_t"></div><div class="k-delta">30 days after offer</div></div>
+      <div class="card kpi c3"><div class="k-label">Churn at €12.99 (control)</div><div class="k-value" id="k_c"></div><div class="k-delta">30 days after offer</div></div>
+      <div class="card kpi c3"><div class="k-label">Difference</div><div class="k-value" id="k_diff"></div><div class="k-delta">Test vs control</div></div>
+      <div class="card kpi c3"><div class="k-label">Exit survey responses</div><div class="k-value" id="k_resp"></div><div class="k-delta">Jul to Oct 2026</div></div>
+
+      <div class="card c5"><h3>Pricing test: 30 day churn</h3><div class="sub">December 2025 test of a €9.99 monthly price</div><div class="chart" id="ch_test"></div></div>
+      <div class="card c7"><h3>Main reason for cancelling</h3><div class="sub">Exit survey, share of respondents</div><div class="chart" id="ch_survey"></div></div>
+      <div class="card c12"><h3>Pricing test details</h3><div class="sub">Test design and enrollment</div>
+        <div class="tbl-wrap"><table id="t_test"></table></div></div>
+    </div>
+  </section>
+</main>
+
+<div class="tabs">
+  <button data-p="p1" class="on">Executive overview</button>
+  <button data-p="p2">Churn drivers</button>
+  <button data-p="p3">Acquisition and cohorts</button>
+  <button data-p="p4">Pricing test and customer voice</button>
+  <span class="zoom">Bramble Data Platform</span>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<script>
+const D = /*__DATA__*/null;
+const GEO = /*__GEO__*/null;
+
+const COL = { s1: '#2a78d6', s2: '#eb6834', s3: '#1baf7a', s4: '#eda100', plum: '#3b1748', plum6: '#5e2a6e', lime: '#bada55' };
+const CH_LABEL = { organic: 'Organic', paid_search: 'Paid search', referral: 'Referral', influencer: 'Influencer' };
+const CH_COL = { organic: COL.s1, paid_search: COL.s2, referral: COL.s3, influencer: COL.s4 };
+const RG = ['DACH', 'Nordics', 'Benelux', 'Southern Europe'];
+const RG_COL = { 'DACH': COL.s1, 'Nordics': COL.s2, 'Benelux': COL.s3, 'Southern Europe': COL.s4 };
+const PLAN_COL = { monthly: COL.s1, annual: COL.s2 };
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const lab = m => MON[+m.slice(5, 7) - 1] + ' ' + m.slice(2, 4);
+const longLab = m => MON[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4);
+const pct = (v, d = 1) => (v * 100).toFixed(d) + '%';
+const num = v => Math.round(v).toLocaleString('en-GB');
+const kfmt = v => v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : (v / 1e3).toFixed(1) + 'K';
+const eur = v => '€' + (v / 1e6).toFixed(1) + 'M';
+
+let period = 24;
+const charts = {};
+const months = D.kpi.map(r => r.month);
+
+const baseOpt = () => ({
+  textStyle: { fontFamily: getComputedStyle(document.body).fontFamily, color: '#252423' },
+  grid: { left: 56, right: 18, top: 34, bottom: 34 },
+  tooltip: {
+    trigger: 'axis', backgroundColor: '#fff', borderColor: '#c8c6c4', borderWidth: 1,
+    textStyle: { color: '#252423', fontSize: 12 }, extraCssText: 'box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;',
+    axisPointer: { type: 'line', lineStyle: { color: '#8a8886', type: 'dashed' } }
+  },
+  legend: { top: 4, left: 8, itemWidth: 14, itemHeight: 8, textStyle: { color: '#605e5c', fontSize: 11.5 }, icon: 'roundRect' },
+  xAxis: { type: 'category', axisLine: { lineStyle: { color: '#c8c6c4' } }, axisTick: { show: false }, axisLabel: { color: '#605e5c', fontSize: 11 } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#edebe9' } }, axisLabel: { color: '#605e5c', fontSize: 11 } }
+});
+
+function win(arr) { return arr.slice(arr.length - period); }
+function mk(id) { if (!charts[id]) charts[id] = echarts.init(document.getElementById(id), null, { renderer: 'canvas' }); return charts[id]; }
+
+/* ---------- KPI cards ---------- */
+function kpis() {
+  const k = D.kpi, n = k.length, now = k[n - 1], ly = k[n - 13];
+  const delta = (cur, prev, kind) => {
+    let txt, up;
+    if (kind === 'pts') { const d = (cur - prev) * 100; up = d >= 0; txt = (up ? '+' : '') + d.toFixed(1) + ' pts'; }
+    else if (kind === 'abs') { const d = cur - prev; up = d >= 0; txt = (up ? '+' : '') + d.toFixed(1); }
+    else { const d = (cur / prev - 1) * 100; up = d >= 0; txt = (up ? '+' : '') + d.toFixed(1) + '%'; }
+    return { txt, up };
+  };
+  const put = (id, val, d, goodWhenUp) => {
+    document.getElementById(id).textContent = val;
+    const good = d.up === goodWhenUp;
+    document.getElementById(id + '_d').innerHTML = `<span class="${good ? 'u' : 'd'}">${d.up ? '▲' : '▼'} ${d.txt}</span> vs ${longLab(ly.month)}`;
+  };
+  put('k_subs', kfmt(now.subscribers_end), delta(now.subscribers_end, ly.subscribers_end), true);
+  put('k_mrr', eur(now.mrr_eur), delta(now.mrr_eur, ly.mrr_eur), true);
+  put('k_churn', pct(now.churn_rate), delta(now.churn_rate, ly.churn_rate, 'pts'), false);
+  put('k_ten', now.avg_tenure_months.toFixed(1) + ' mo', delta(now.avg_tenure_months, ly.avg_tenure_months, 'abs'), true);
+  put('k_new', kfmt(now.new_subscribers), delta(now.new_subscribers, ly.new_subscribers), true);
+  put('k_cac', '€' + now.cac_eur.toFixed(2), delta(now.cac_eur, ly.cac_eur), false);
+}
+
+/* ---------- page 1 ---------- */
+function page1() {
+  const k = win(D.kpi), x = k.map(r => lab(r.month));
+  let o = baseOpt();
+  o.legend.show = false;
+  o.xAxis.data = x;
+  o.yAxis.min = 0.038; o.yAxis.max = 0.047; o.yAxis.interval = 0.001;
+  o.yAxis.axisLabel.formatter = v => pct(v);
+  o.tooltip.valueFormatter = v => pct(v, 2);
+  o.series = [{ name: 'Churn rate', type: 'line', data: k.map(r => r.churn_rate), smooth: false, symbol: 'circle', symbolSize: 7,
+    lineStyle: { width: 2.5, color: COL.plum }, itemStyle: { color: COL.plum, borderColor: '#fff', borderWidth: 1.5 },
+    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(186,218,85,.45)' }, { offset: 1, color: 'rgba(186,218,85,0)' }]) },
+    markPoint: { symbol: 'pin', symbolSize: 38, itemStyle: { color: COL.plum6 }, label: { fontSize: 10, formatter: p => pct(p.value) }, data: [{ type: 'max', name: 'Peak' }] } }];
+  mk('ch_churn').setOption(o, true);
+
+  o = baseOpt(); o.legend.show = false; o.xAxis.data = x;
+  o.yAxis.scale = true; o.yAxis.axisLabel.formatter = v => (v / 1e6).toFixed(2) + 'M';
+  o.tooltip.valueFormatter = v => num(v);
+  o.series = [{ name: 'Subscribers', type: 'line', data: k.map(r => r.subscribers_end), symbol: 'circle', symbolSize: 6,
+    lineStyle: { width: 2.5, color: COL.s1 }, itemStyle: { color: COL.s1 } }];
+  mk('ch_subs').setOption(o, true);
+
+  o = baseOpt(); o.xAxis.data = x; o.yAxis.axisLabel.formatter = v => (v / 1000) + 'K';
+  o.tooltip.valueFormatter = v => num(v);
+  o.series = [
+    { name: 'New subscribers', type: 'bar', data: k.map(r => r.new_subscribers), itemStyle: { color: COL.s1, borderRadius: [3, 3, 0, 0] }, barGap: '8%', barMaxWidth: 14 },
+    { name: 'Cancellations', type: 'bar', data: k.map(r => r.cancellations), itemStyle: { color: COL.s2, borderRadius: [3, 3, 0, 0] }, barMaxWidth: 14 }];
+  mk('ch_flow').setOption(o, true);
+
+  o = baseOpt(); o.legend.show = false; o.xAxis.data = x;
+  o.yAxis.scale = true; o.yAxis.axisLabel.formatter = v => '€' + (v / 1e6).toFixed(1) + 'M';
+  o.tooltip.valueFormatter = v => '€' + num(v);
+  o.series = [{ name: 'MRR', type: 'line', data: k.map(r => r.mrr_eur), symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: COL.plum6 }, itemStyle: { color: COL.plum6 } }];
+  mk('ch_mrr').setOption(o, true);
+
+  const rows = D.kpi.slice().reverse().slice(0, period);
+  document.getElementById('t_detail').innerHTML =
+    '<thead><tr><th>Month</th><th>Subscribers</th><th>Paying subscribers</th><th>Paused accounts</th><th>New subscribers</th><th>Cancellations</th><th>Churn rate</th><th>MRR (EUR)</th><th>ARPU (EUR)</th></tr></thead><tbody>' +
+    rows.map(r => `<tr><td>${longLab(r.month)}</td><td>${num(r.subscribers_end)}</td><td>${num(r.paying_subscribers_end)}</td><td>${num(r.paused_accounts_end)}</td><td>${num(r.new_subscribers)}</td><td>${num(r.cancellations)}</td><td>${pct(r.churn_rate, 2)}</td><td>${num(r.mrr_eur)}</td><td>${r.arpu_eur.toFixed(2)}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ---------- page 2 ---------- */
+let selRegion = 'All';
+function seriesBy(rows, key, val, field) {
+  return win(months).map(m => { const r = rows.find(z => z.month === m && z[key] === val); return r && r[field] != null ? r[field] : null; });
+}
+function page2() {
+  const x = win(months).map(lab);
+  let o = baseOpt(); o.xAxis.data = x;
+  o.yAxis.scale = true; o.yAxis.axisLabel.formatter = v => pct(v);
+  o.tooltip.valueFormatter = v => v == null ? '-' : pct(v, 2);
+  o.series = RG.map(r => ({ name: r, type: 'line', data: seriesBy(D.region, 'region', r, 'churn_rate'), symbol: 'circle', symbolSize: 6,
+    lineStyle: { width: selRegion === 'All' || selRegion === r ? 2.5 : 1, color: RG_COL[r], opacity: selRegion === 'All' || selRegion === r ? 1 : 0.25 },
+    itemStyle: { color: RG_COL[r], opacity: selRegion === 'All' || selRegion === r ? 1 : 0.25 }, emphasis: { focus: 'series' } }));
+  mk('ch_region').setOption(o, true);
+
+  o = baseOpt(); o.xAxis.data = x; o.yAxis.axisLabel.formatter = v => pct(v);
+  o.tooltip.valueFormatter = v => v == null ? '-' : pct(v, 2);
+  o.series = ['monthly', 'annual'].map(p => ({ name: p === 'monthly' ? 'Monthly plan' : 'Annual plan', type: 'line', data: seriesBy(D.plan, 'plan', p, 'churn_rate'),
+    symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: PLAN_COL[p] }, itemStyle: { color: PLAN_COL[p] }, emphasis: { focus: 'series' } }));
+  mk('ch_plan').setOption(o, true);
+
+  o = baseOpt(); o.xAxis.data = x; o.yAxis.axisLabel.formatter = v => pct(v);
+  o.tooltip.valueFormatter = v => v == null ? '-' : pct(v, 2);
+  o.series = Object.keys(CH_LABEL).map(c => ({ name: CH_LABEL[c], type: 'line', data: seriesBy(D.channel, 'channel', c, 'churn_rate'), connectNulls: false,
+    symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: CH_COL[c] }, itemStyle: { color: CH_COL[c] }, emphasis: { focus: 'series' } }));
+  mk('ch_channel').setOption(o, true);
+  drawMap();
+}
+
+let map, geoLayer, legendCtl;
+const RAMP = ['#f1e9f4', '#d9c2e1', '#b48ac4', '#8a54a0', '#5e2a6e', '#3b1748'];
+const LO = 0.037, HI = 0.050;
+function hex2rgb(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function rampColor(v) {
+  const t = Math.max(0, Math.min(1, (v - LO) / (HI - LO))) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(t)), f = t - i;
+  const a = hex2rgb(RAMP[i]), b = hex2rgb(RAMP[i + 1]);
+  return 'rgb(' + a.map((x, j) => Math.round(x + (b[j] - x) * f)).join(',') + ')';
+}
+function drawMap() {
+  const m = document.getElementById('mapMonth').value;
+  const val = r => (D.region.find(z => z.month === m && z.region === r) || {});
+  const prev = r => { const i = months.indexOf(m); return i >= 12 ? (D.region.find(z => z.month === months[i - 12] && z.region === r) || {}) : {}; };
+  if (!map) {
+    map = L.map('map', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.25 }).setView([52, 10], 3.4);
+    map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 8, subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+    legendCtl = L.control({ position: 'bottomright' });
+    legendCtl.onAdd = () => { const d = L.DomUtil.create('div', 'map-legend'); d.innerHTML = '<b>Churn rate</b><div style="width:120px;height:10px;margin:4px 0 2px;background:linear-gradient(90deg,' + RAMP.join(',') + ')"></div><div style="display:flex;justify-content:space-between;width:120px"><span>' + pct(LO) + '</span><span>' + pct(HI) + '</span></div>'; return d; };
+    legendCtl.addTo(map);
+  }
+  if (geoLayer) map.removeLayer(geoLayer);
+  geoLayer = L.geoJSON(GEO, {
+    style: f => { const v = val(f.properties.region).churn_rate; const dim = selRegion !== 'All' && selRegion !== f.properties.region;
+      return { fillColor: rampColor(v), fillOpacity: dim ? 0.25 : 0.85, color: selRegion === f.properties.region ? '#bada55' : '#ffffff', weight: selRegion === f.properties.region ? 2.5 : 1 }; },
+    onEachFeature: (f, layer) => {
+      const r = f.properties.region, v = val(r), p = prev(r);
+      const yoy = p.churn_rate != null ? ` (${((v.churn_rate - p.churn_rate) * 100 >= 0 ? '+' : '')}${((v.churn_rate - p.churn_rate) * 100).toFixed(1)} pts vs ${longLab(months[months.indexOf(m) - 12])})` : '';
+      layer.bindTooltip(`<b>${r}</b> · ${f.properties.country}<br>${longLab(m)} churn: <b>${pct(v.churn_rate, 2)}</b>${yoy}<br>Opening subscribers: ${num(v.subscribers_start)}<br>Cancellations: ${num(v.cancellations)}`, { sticky: true, direction: 'top', offset: [0, -10] });
+      layer.on('click', () => { selRegion = selRegion === r ? 'All' : r; document.getElementById('regionSel').value = selRegion; page2(); });
+      layer.on('mouseover', e => e.target.setStyle({ weight: 2.5, color: '#3b1748' }));
+      layer.on('mouseout', e => geoLayer.resetStyle(e.target));
+    }
+  }).addTo(map);
+  if (!map._fitted) { map.fitBounds([[36.5, -9.8], [70.5, 30]], { padding: [4, 4] }); map._fitted = true; }
+}
+
+/* ---------- page 3 ---------- */
+let cohortCh = 'all';
+function page3() {
+  const x = win(months).map(lab);
+  let o = baseOpt(); o.xAxis.data = x; o.yAxis.axisLabel.formatter = v => (v / 1000) + 'K';
+  o.tooltip.valueFormatter = v => v == null ? '-' : num(v);
+  o.series = Object.keys(CH_LABEL).map(c => ({ name: CH_LABEL[c], type: 'bar', stack: 'adds',
+    data: win(months).map(m => { const r = D.adds.find(z => z.month === m && z.channel === c); return r ? r.new_subscribers : 0; }),
+    itemStyle: { color: CH_COL[c], borderColor: '#fff', borderWidth: 1 }, barMaxWidth: 22, emphasis: { focus: 'series' } }));
+  mk('ch_adds').setOption(o, true);
+
+  o = baseOpt(); o.legend.show = false; o.xAxis.data = x;
+  o.yAxis.min = 30; o.yAxis.axisLabel.formatter = v => '€' + v; o.tooltip.valueFormatter = v => '€' + v.toFixed(2);
+  o.series = [{ name: 'CAC', type: 'line', data: win(D.kpi).map(r => r.cac_eur), symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: COL.plum6 }, itemStyle: { color: COL.plum6 } }];
+  mk('ch_cac').setOption(o, true);
+
+  o = baseOpt(); o.legend.show = false; o.xAxis.data = x;
+  o.yAxis.scale = true; o.yAxis.axisLabel.formatter = v => v + ' mo'; o.tooltip.valueFormatter = v => v.toFixed(1) + ' months';
+  o.series = [{ name: 'Average tenure', type: 'line', data: win(D.kpi).map(r => r.avg_tenure_months), symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: COL.s3 }, itemStyle: { color: COL.s3 } }];
+  mk('ch_ten').setOption(o, true);
+
+  // cohort matrix
+  const sel = D.cohort.filter(r => cohortCh === 'all' || r.channel === cohortCh);
+  const signups = [...new Set(sel.map(r => r.signup_month))].sort().filter(m => m >= '2025-06');
+  const maxM = 12;
+  let html = '<thead><tr><th>Signup month</th><th>Signups</th>' + Array.from({ length: maxM }, (_, i) => `<th>M${i}</th>`).join('') + '</tr></thead><tbody>';
+  for (const sm of signups) {
+    const rows = sel.filter(r => r.signup_month === sm);
+    const n0 = rows.filter(r => r.months_since_signup === 0).reduce((a, b) => a + b.signups, 0);
+    if (!n0) continue;
+    html += `<tr><td class="lbl">${longLab(sm)}</td><td>${num(n0)}</td>`;
+    for (let i = 0; i < maxM; i++) {
+      const rr = rows.filter(r => r.months_since_signup === i);
+      if (!rr.length) { html += '<td></td>'; continue; }
+      const v = rr.reduce((a, b) => a + b.active, 0) / n0;
+      const t = Math.max(0, Math.min(1, (v - 0.5) / 0.5));
+      const bg = `rgba(94,42,110,${(0.08 + t * 0.75).toFixed(2)})`;
+      html += `<td title="${longLab(sm)} cohort, month ${i}: ${pct(v)} retained" style="background:${bg};color:${t > 0.55 ? '#fff' : '#252423'}">${pct(v, 0)}</td>`;
+    }
+    html += '</tr>';
+  }
+  document.getElementById('t_cohort').innerHTML = html + '</tbody>';
+}
+
+/* ---------- page 4 ---------- */
+function page4() {
+  const t = D.test.find(r => r.arm === 'Test'), c = D.test.find(r => r.arm === 'Control');
+  document.getElementById('k_t').textContent = pct(t.churn_rate_30_days);
+  document.getElementById('k_c').textContent = pct(c.churn_rate_30_days);
+  document.getElementById('k_diff').textContent = ((t.churn_rate_30_days - c.churn_rate_30_days) * 100).toFixed(1) + ' pts';
+  document.getElementById('k_resp').textContent = num(D.survey[0].total_respondents);
+
+  let o = baseOpt(); o.legend.show = false;
+  o.xAxis.data = ['€9.99 (test)', '€12.99 (control)'];
+  o.yAxis.axisLabel.formatter = v => pct(v, 0); o.tooltip.trigger = 'item';
+  o.tooltip.formatter = p => { const r = p.dataIndex === 0 ? t : c; return `<b>${p.name}</b><br>30 day churn: <b>${pct(r.churn_rate_30_days)}</b><br>Subscribers in arm: ${num(r.subscribers)}<br>Cancellations: ${num(r.cancellations_30_days)}`; };
+  o.series = [{ type: 'bar', barWidth: 70, data: [{ value: t.churn_rate_30_days, itemStyle: { color: COL.lime, borderRadius: [4, 4, 0, 0] } }, { value: c.churn_rate_30_days, itemStyle: { color: COL.plum6, borderRadius: [4, 4, 0, 0] } }],
+    label: { show: true, position: 'top', formatter: p => pct(p.value), color: '#252423', fontWeight: 600 } }];
+  mk('ch_test').setOption(o, true);
+
+  const s = D.survey.slice().sort((a, b) => a.share_of_respondents - b.share_of_respondents);
+  o = baseOpt(); o.legend.show = false; o.grid.left = 190;
+  o.xAxis = { type: 'value', axisLabel: { formatter: v => pct(v, 0), color: '#605e5c' }, splitLine: { lineStyle: { color: '#edebe9' } } };
+  o.yAxis = { type: 'category', data: s.map(r => r.reason), axisLabel: { color: '#252423', fontSize: 12 }, axisTick: { show: false }, axisLine: { lineStyle: { color: '#c8c6c4' } } };
+  o.tooltip.trigger = 'item';
+  o.tooltip.formatter = p => { const r = s[p.dataIndex]; return `<b>${r.reason}</b><br>${pct(r.share_of_respondents)} of respondents (${num(r.respondents)})<br>Total respondents: ${num(r.total_respondents)}<br>Survey invitations: ${num(r.survey_invitations)}`; };
+  o.series = [{ type: 'bar', data: s.map(r => ({ value: r.share_of_respondents, itemStyle: { color: r.reason === 'Price' ? COL.plum : '#b48ac4', borderRadius: [0, 4, 4, 0] } })), barWidth: 18,
+    label: { show: true, position: 'right', formatter: p => pct(p.value, 0), color: '#252423' } }];
+  mk('ch_survey').setOption(o, true);
+
+  document.getElementById('t_test').innerHTML = '<thead><tr><th>Arm</th><th>Price (EUR)</th><th>Start</th><th>End</th><th>Enrollment</th><th>Subscribers</th><th>Monthly plan</th><th>Annual plan</th><th>Cancellations (30 days)</th><th>Churn (30 days)</th></tr></thead><tbody>' +
+    D.test.map(r => `<tr><td>${r.arm}</td><td>${r.price_eur.toFixed(2)}</td><td>${r.start_date}</td><td>${r.end_date}</td><td>${r.enrollment}</td><td>${num(r.subscribers)}</td><td>${num(r.monthly_plan)}</td><td>${num(r.annual_plan)}</td><td>${num(r.cancellations_30_days)}</td><td>${pct(r.churn_rate_30_days)}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ---------- wiring ---------- */
+const TITLES = { p1: ['Executive overview', 'Paying subscribers, revenue and retention, all markets'], p2: ['Churn drivers', 'Where and among whom cancellations are rising'],
+  p3: ['Acquisition and cohorts', 'How subscribers join and how long they stay'], p4: ['Pricing test and customer voice', 'December 2025 price test and exit survey'] };
+let current = 'p1';
+function render() {
+  if (current === 'p1') page1();
+  if (current === 'p2') page2();
+  if (current === 'p3') page3();
+  if (current === 'p4') page4();
+  Object.values(charts).forEach(c => c.resize());
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(z => z.classList.toggle('on', z === b));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === b.dataset.p));
+  current = b.dataset.p;
+  document.getElementById('pageTitle').textContent = TITLES[current][0];
+  document.querySelector('.band .subtitle').textContent = TITLES[current][1];
+  render();
+  if (current === 'p2' && map) setTimeout(() => map.invalidateSize(), 50);
+});
+document.querySelectorAll('[data-slicer="period"]').forEach(seg => seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+  period = +b.dataset.v;
+  document.querySelectorAll('[data-slicer="period"] button').forEach(z => z.classList.toggle('on', +z.dataset.v === period));
+  render();
+}));
+document.querySelectorAll('#cohortCh button').forEach(b => b.onclick = () => {
+  cohortCh = b.dataset.v;
+  document.querySelectorAll('#cohortCh button').forEach(z => z.classList.toggle('on', z === b));
+  page3();
+});
+const mm = document.getElementById('mapMonth');
+months.slice().reverse().forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = longLab(m); mm.appendChild(o); });
+mm.onchange = drawMap;
+const rs = document.getElementById('regionSel');
+RG.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; rs.appendChild(o); });
+rs.onchange = () => { selRegion = rs.value; page2(); };
+
+// focus mode on charts and tables
+document.querySelectorAll('.card:not(.kpi)').forEach(card => {
+  const vh = document.createElement('div'); vh.className = 'vh';
+  vh.innerHTML = '<button title="Focus mode">⤢</button>';
+  card.appendChild(vh);
+  vh.querySelector('button').onclick = () => {
+    const on = !card.classList.contains('focus');
+    document.querySelectorAll('.card.focus').forEach(c => c.classList.remove('focus'));
+    card.classList.toggle('focus', on);
+    document.getElementById('scrim').classList.toggle('on', on);
+    setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) map.invalidateSize(); }, 30);
+  };
+});
+document.getElementById('scrim').onclick = () => {
+  document.querySelectorAll('.card.focus').forEach(c => c.classList.remove('focus'));
+  document.getElementById('scrim').classList.remove('on');
+  setTimeout(() => { Object.values(charts).forEach(c => c.resize()); if (map) map.invalidateSize(); }, 30);
+};
+window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
+kpis();
+render();
+</script>
+</body>
+</html>
