@@ -1,0 +1,3 @@
+arm,price_eur,start_date,end_date,enrollment,subscribers,monthly_plan,annual_plan,cancellations_30_days,churn_rate_30_days
+Test,9.99,2025-12-15,2025-12-31,"Email offer, opt in",6200,1550,4650,180,0.029
+Control,12.99,2025-12-15,2025-12-31,"All other subscribers, sample",24000,15360,8640,1056,0.044

@@ -17,7 +17,7 @@ Bramble+ is a subscription video streaming service founded in Vienna in 2019. It
 | Paying subscribers | 1.84 million |
 | Monthly plan | €12.99 per month, about 64% of subscribers |
 | Annual plan | €129 per year (about €10.75 per month), about 36% of subscribers |
-| Monthly recurring revenue | about €21.9 million |
+| Monthly recurring revenue | about €21.8 million |
 | Customer acquisition cost | about €38 per new subscriber |
 | Content spend | about 45% of revenue |
 
@@ -37,7 +37,7 @@ Choose exactly one.
 
 | Option | What it means | What is known |
 |---|---|---|
-| **1. Cut the price** | Monthly plan drops to €9.99 for all subscribers, new and existing. Annual plan unchanged. | Can launch in 2 weeks. Affects about 1.18 million monthly subscribers. |
+| **1. Cut the price** | Monthly plan drops to €9.99 for all subscribers, new and existing. Annual plan unchanged. | Can launch in 2 weeks. Affects about 1.19 million monthly subscribers. |
 | **2. Launch an ad-supported tier** | Add a €7.99 plan with ads; keep €12.99 ad-free. | Takes about 4 months to build. Ad sales estimates about €2.50 per ad tier subscriber per month. Some current subscribers would trade down. |
 | **3. Targeted retention offers** | Offer subscribers flagged as at risk 25% off for 3 months. Everyone else keeps current prices. | Can launch in 3 weeks. Cost depends on how many subscribers are flagged and how well the flag works. |
 | **4. Hold course** | Keep prices and plans as they are; proceed with the planned content slate. | No launch cost. The board will ask why doing nothing is safe. |
