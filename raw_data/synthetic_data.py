@@ -10,12 +10,15 @@ import numpy as np
 import pandas as pd
 
 RNG = np.random.default_rng(2026)
+MIX_RNG = np.random.default_rng(7)
+REGION_RNG = np.random.default_rng(11)
 OUT = '.'
 
 N = 24
 MONTHS = [f'{2024 + (10 + i) // 12}-{(10 + i) % 12 + 1:02d}' for i in range(N)]   # 2024-11 .. 2026-10
 PLANS = ['monthly', 'annual']
 CHANNELS = ['organic', 'paid_search', 'referral', 'influencer']
+SOURCES = ['organic', 'paid_search', 'referral', 'influencer', 'influencer']   # acquisition sources
 REGIONS = ['DACH', 'Nordics', 'Benelux', 'Southern Europe']
 PRICE = {'monthly': 12.99, 'annual': 129 / 12}
 
@@ -23,17 +26,18 @@ PRICE = {'monthly': 12.99, 'annual': 129 / 12}
 # Inputs
 # ---------------------------------------------------------------------------
 START_SUBS = 1_768_000
-START_MONTHLY_SHARE = 0.7034
-BASE_CHANNEL_SHARE = np.array([0.50, 0.32, 0.18])
-NEW_CHANNEL_SHARE = np.array([0.50, 0.32, 0.18])
+START_MONTHLY_SHARE = 0.7024
+BASE_CHANNEL_SHARE = np.array([0.48, 0.31, 0.17, 0.04])
+NEW_CHANNEL_SHARE = np.array([0.46, 0.30, 0.17, 0.07])
 NEW_ANNUAL_SHARE = 0.22
 
-REGION_SHARE = {                      # by channel
-    'organic':     [0.40, 0.22, 0.18, 0.20],
-    'paid_search': [0.38, 0.22, 0.20, 0.20],
-    'referral':    [0.44, 0.20, 0.18, 0.18],
-    'influencer':  [0.62, 0.12, 0.12, 0.14],
-}
+REGION_SHARE = [                      # by source
+    [0.40, 0.22, 0.18, 0.20],
+    [0.38, 0.22, 0.20, 0.20],
+    [0.44, 0.20, 0.18, 0.18],
+    [0.46, 0.18, 0.16, 0.20],
+    [0.62, 0.12, 0.12, 0.14],
+]
 
 # monthly cancellation rate
 CHURN_RATE = np.array([0.0406, 0.0397, 0.0412, 0.0418, 0.0395, 0.0403,
@@ -43,23 +47,25 @@ CHURN_RATE = np.array([0.0406, 0.0397, 0.0412, 0.0418, 0.0395, 0.0403,
 STATUS_CHANGE_MONTH = 18
 PAUSE_SHARE = 0.085
 
-BASE_ADDS = np.array([73.2, 75.7, 76.2, 71.7, 72.7, 76.7, 74.2, 71.2, 75.2, 76.7, 73.7, 72.0, 63.9, 66.4, 76.4, 64.4, 63.4, 62.4, 60.4, 79.0, 65.8, 69.8, 68.8, 66.8]) * 1000
+BASE_ADDS = np.array([69.5, 72.0, 72.5, 68.0, 69.0, 73.0, 70.5, 67.5, 71.5, 73.0, 70.0, 72.0, 63.3, 65.8, 75.8, 63.8, 62.8, 61.8, 59.8, 79.0, 64.8, 68.8, 67.8, 65.8]) * 1000
+CAMPAIGNS = {(2, 1): 1.30, (3, 1): 1.15, (10, 3): 4.5, (11, 3): 2.6, (14, 3): 2.0, (21, 2): 1.35}   # (month, source): lift
 PARTNER_ADDS = {16: 74_000, 17: 63_000, 18: 41_000}
 INTRO_MONTHS = 3
 
 # relative cancellation propensities
-CH_REL = np.array([1.0, 1.12, 0.82])
+CH_REL = np.array([1.0, 1.12, 0.82, 1.08])
 PLAN_REL = {'monthly': 1.0, 'annual': 0.29}
 NEW_SUB_REL = 1.2                     # first two months
 PARTNER_HAZARD = [0.025, 0.025, 0.025, 0.24, 0.145, 0.095]
 PARTNER_LATER = 0.075
 
-START_TENURE_MEAN = 5.800
+START_TENURE_MEAN = 5.880
 MAXAGE = 90
 CAC = np.array([40.1, 39.2, 38.6, 39.8, 40.4, 39.0, 38.3, 39.6, 40.8, 39.4, 38.9, 39.9,
                 39.5, 40.2, 37.8, 38.9, 33.1, 33.8, 35.0, 39.0, 39.8, 39.1, 38.4, 38.1])
 
 ages = np.arange(1, MAXAGE + 1)
+NS = len(SOURCES)
 
 
 def age_weights(mean):
@@ -82,32 +88,40 @@ def paying_mrr(base, cohort, t):
     for pi, pl in enumerate(PLANS):
         mrr += base[pi].sum() * PRICE[pl]
         for k in range(N):
-            for ci in range(4):
-                n = cohort[pi, ci, k]
+            for si in range(NS):
+                n = cohort[pi, si, k]
                 if n <= 0:
                     continue
                 price = PRICE[pl]
-                if ci == 3 and k in PARTNER_ADDS and 0 <= t - k < INTRO_MONTHS:
+                if si == 4 and 0 <= t - k < INTRO_MONTHS:
                     price = PRICE[pl] * 0.5
                 mrr += n * price
     return mrr
 
 
+def to_channels(a):
+    """Collapse acquisition sources to reporting channels (last axis = source)."""
+    out = a[..., :4].copy()
+    out[..., 3] += a[..., 4]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Simulation
 # ---------------------------------------------------------------------------
+mix_noise = MIX_RNG.normal(1, 0.08, (N, 4))
 w = age_weights(START_TENURE_MEAN)
-base = np.zeros((2, 3, MAXAGE))       # plan x channel x age
-for ci in range(3):
-    base[0, ci] = START_SUBS * BASE_CHANNEL_SHARE[ci] * START_MONTHLY_SHARE * w
-    base[1, ci] = START_SUBS * BASE_CHANNEL_SHARE[ci] * (1 - START_MONTHLY_SHARE) * w
-cohort = np.zeros((2, 4, N))          # plan x channel x signup month
-paused = np.zeros((2, 4))
+base = np.zeros((2, 4, MAXAGE))       # plan x source x age
+for si in range(4):
+    base[0, si] = START_SUBS * BASE_CHANNEL_SHARE[si] * START_MONTHLY_SHARE * w
+    base[1, si] = START_SUBS * BASE_CHANNEL_SHARE[si] * (1 - START_MONTHLY_SHARE) * w
+cohort = np.zeros((2, NS, N))         # plan x source x signup month
+paused = np.zeros((2, NS))
 records = []
 
 for t in range(N):
-    start_active = np.zeros((2, 4))
-    start_active[:, :3] = base.sum(axis=2)
+    start_active = np.zeros((2, NS))
+    start_active[:, :4] = base.sum(axis=2)
     start_active += cohort.sum(axis=2)
     start_total = start_active.sum() + paused.sum()
     start_by = start_active + paused
@@ -115,33 +129,33 @@ for t in range(N):
     target_cancels = CHURN_RATE[t] * start_total
     status_adj = 1.0 / (1 - PAUSE_SHARE) if t >= STATUS_CHANGE_MONTH else 1.0
 
-    exits = np.zeros((2, 4))
+    exits = np.zeros((2, NS))
     for k in PARTNER_ADDS:
         if k >= t:
             continue
         a = t - k
         h = PARTNER_HAZARD[a - 1] if a <= len(PARTNER_HAZARD) else PARTNER_LATER
-        e = cohort[0, 3, k] * h
-        cohort[0, 3, k] -= e
-        exits[0, 3] += e
-    partner_cancels = exits[0, 3] / status_adj
+        e = cohort[0, 4, k] * h
+        cohort[0, 4, k] -= e
+        exits[0, 4] += e
+    partner_cancels = exits[0, 4] / status_adj
 
     # remaining subscribers, scaled to the monthly total
-    rel = np.zeros((2, 3, MAXAGE))
-    relc = np.zeros((2, 3, N))
+    rel = np.zeros((2, 4, MAXAGE))
+    relc = np.zeros((2, 4, N))
     for pi, pl in enumerate(PLANS):
-        for ci in range(3):
-            rel[pi, ci] = base[pi, ci] * CH_REL[ci] * PLAN_REL[pl]
+        for si in range(4):
+            rel[pi, si] = base[pi, si] * CH_REL[si] * PLAN_REL[pl]
             for k in range(t):
                 boost = NEW_SUB_REL if (pl == 'monthly' and t - k <= 2) else 1.0
-                relc[pi, ci, k] = cohort[pi, ci, k] * CH_REL[ci] * PLAN_REL[pl] * boost
+                relc[pi, si, k] = cohort[pi, si, k] * CH_REL[si] * PLAN_REL[pl] * boost
     needed = (target_cancels - partner_cancels) * status_adj
     scale = needed / (rel.sum() + relc.sum())
     e_base = rel * scale
     e_coh = relc * scale
     base -= e_base
-    cohort[:, :3, :] -= e_coh
-    exits[:, :3] += e_base.sum(axis=2) + e_coh.sum(axis=2)
+    cohort[:, :4, :] -= e_coh
+    exits[:, :4] += e_base.sum(axis=2) + e_coh.sum(axis=2)
 
     if t >= STATUS_CHANGE_MONTH:
         pz = exits * PAUSE_SHARE
@@ -156,14 +170,19 @@ for t in range(N):
     base = nb
 
     adds = BASE_ADDS[t] * RNG.normal(1, 0.01)
-    for ci in range(3):
-        cohort[1, ci, t] = adds * NEW_CHANNEL_SHARE[ci] * NEW_ANNUAL_SHARE
-        cohort[0, ci, t] = adds * NEW_CHANNEL_SHARE[ci] * (1 - NEW_ANNUAL_SHARE)
+    mix = NEW_CHANNEL_SHARE * mix_noise[t]
+    for (cm, cs), lift in CAMPAIGNS.items():
+        if cm == t:
+            mix[cs] *= lift
+    mix = mix / (NEW_CHANNEL_SHARE * mix_noise[t]).sum()
+    for si in range(4):
+        cohort[1, si, t] = adds * mix[si] * NEW_ANNUAL_SHARE
+        cohort[0, si, t] = adds * mix[si] * (1 - NEW_ANNUAL_SHARE)
     if t in PARTNER_ADDS:
-        cohort[0, 3, t] = PARTNER_ADDS[t]
+        cohort[0, 4, t] = PARTNER_ADDS[t]
 
-    end_active = np.zeros((2, 4))
-    end_active[:, :3] = base.sum(axis=2)
+    end_active = np.zeros((2, NS))
+    end_active[:, :4] = base.sum(axis=2)
     end_active += cohort.sum(axis=2)
     records.append(dict(t=t, start_by=start_by, start_total=start_total, exits=exits,
                         cancels=cancels, adds=cohort[:, :, t].copy(),
@@ -194,20 +213,20 @@ pd.DataFrame(kpi).to_csv(f'{OUT}/bramble_monthly_kpis.csv', index=False)
 # Churn by segment
 # ---------------------------------------------------------------------------
 rows_ch, rows_pl, rows_rg = [], [], []
-REGION_RNG = np.random.default_rng(11)
 for r in records:
     t = r['t']
     sb, rp = r['start_by'], r['cancels']
+    sbc, rpc = to_channels(sb), to_channels(rp)
     for ci, c in enumerate(CHANNELS):
-        s, x = sb[:, ci].sum(), rp[:, ci].sum()
+        s, x = sbc[:, ci].sum(), rpc[:, ci].sum()
         rows_ch.append(dict(month=MONTHS[t], channel=c, subscribers_start=round(s),
                             cancellations=round(x), churn_rate=round(x / s, 4) if s > 0 else None))
     for pi, pl in enumerate(PLANS):
         s, x = sb[pi].sum(), rp[pi].sum()
         rows_pl.append(dict(month=MONTHS[t], plan=pl, subscribers_start=round(s),
                             cancellations=round(x), churn_rate=round(x / s, 4)))
-    s_rg = np.array([sum(sb[:, ci].sum() * REGION_SHARE[c][ri] for ci, c in enumerate(CHANNELS)) for ri in range(4)])
-    x_rg = np.array([sum(rp[:, ci].sum() * REGION_SHARE[c][ri] for ci, c in enumerate(CHANNELS)) for ri in range(4)])
+    s_rg = np.array([sum(sb[:, si].sum() * REGION_SHARE[si][ri] for si in range(NS)) for ri in range(4)])
+    x_rg = np.array([sum(rp[:, si].sum() * REGION_SHARE[si][ri] for si in range(NS)) for ri in range(4)])
     x_adj = x_rg * REGION_RNG.normal(1, 0.02, 4)
     x_adj *= x_rg.sum() / x_adj.sum()
     for ri, rg in enumerate(REGIONS):
@@ -222,12 +241,13 @@ pd.DataFrame(rows_rg).to_csv(f'{OUT}/bramble_churn_by_region.csv', index=False)
 # ---------------------------------------------------------------------------
 rows_co = []
 for k in range(N):
+    adds_c = to_channels(records[k]['adds'])
     for ci, c in enumerate(CHANNELS):
-        n0 = records[k]['adds'][:, ci].sum()
+        n0 = adds_c[:, ci].sum()
         if n0 <= 0:
             continue
         for t in range(k, N):
-            n = records[t]['cohort'][:, ci, k].sum()
+            n = to_channels(records[t]['cohort'][:, :, k])[:, ci].sum()
             rows_co.append(dict(signup_month=MONTHS[k], channel=c, months_since_signup=t - k,
                                 signups=round(n0), active=round(n), retained_share=round(n / n0, 4)))
 pd.DataFrame(rows_co).to_csv(f'{OUT}/bramble_cohort_retention.csv', index=False)
