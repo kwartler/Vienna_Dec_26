@@ -5,6 +5,7 @@ A no-code group exercise: act as the leadership team of a fictional European str
 | File | Purpose |
 |------|---------|
 | `A_scenario_brief.md` | The situation, the four options and what each group presents |
+| `B_role_memo_CEO.md` to `E_role_memo_Head_of_Data.md` | Private role memos, one per group member |
 
 Still to come: the dashboard (hosted on GitHub Pages) and the data behind it.
 
