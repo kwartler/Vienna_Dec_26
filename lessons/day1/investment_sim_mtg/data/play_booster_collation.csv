@@ -1,0 +1,33 @@
+slot,cards_in_slot,outcome,rarity,treatment,foil,probability,published_odds
+commons,6,common,C,main set,no,1.0,5-6 commons; 1 in 55 packs a Special Guests card replaces a common
+uncommon,1,uncommon,U,main set,no,0.962,remainder
+uncommon,1,braintwister uncommon,U,braintwister series,no,0.038,3.8%
+common_or_uncommon,1,common,C,main set,no,0.23,23%
+common_or_uncommon,1,uncommon,U,main set,no,0.74,74%
+common_or_uncommon,1,braintwister uncommon,U,braintwister series,no,0.03,3%
+echoed_pair,3,uncommon pair,U,main set,no,0.889,88.9%
+echoed_pair,3,rare pair,R,main set,no,0.067,6.7%
+echoed_pair,3,mythic pair,M,main set,no,0.014,1.4%
+echoed_pair,3,borderless uncommon pair,U,borderless echoed pair,no,0.017,1.7%
+echoed_pair,3,borderless rare pair,R,borderless echoed pair,no,,<1%
+echoed_pair,3,borderless mythic pair,M,borderless echoed pair,no,,<1%
+rare_mythic,1,rare,R,main set,no,0.744,74.4% (includes treatments below)
+rare_mythic,1,mythic,M,main set,no,0.148,14.8% (includes treatments below)
+rare_mythic,1,shattered mirror rare,R,shattered mirror,no,0.01,1%
+rare_mythic,1,shattered mirror mythic,M,shattered mirror,no,,<1%
+rare_mythic,1,sculptor's stronghold rare,R,sculptor's stronghold,no,0.038,3.8%
+rare_mythic,1,sculptor's stronghold mythic,M,sculptor's stronghold,no,0.01,1%
+rare_mythic,1,braintwister rare,R,braintwister series,no,0.031,3.1%
+rare_mythic,1,braintwister mythic,M,braintwister series,no,,<1%
+rare_mythic,1,portal view land,R,portal view land,no,0.01,1%
+foil,1,foil common,C,main set,yes,0.495,49.5%
+foil,1,foil uncommon,U,main set,yes,0.405,40.5%
+foil,1,foil rare,R,main set,yes,0.06,6%
+foil,1,foil mythic,M,main set,yes,0.012,1.2%
+land,1,default basic,L,default basic land,no,0.146,14.6%
+land,1,default basic foil,L,default basic land,yes,0.036,3.6%
+land,1,tower basic,L,tower basic land,no,0.218,21.8%
+land,1,tower basic foil,L,tower basic land,yes,0.055,5.5%
+land,1,common dual,L,land (common),no,0.436,43.6%
+land,1,common dual foil,L,land (common),yes,0.109,10.9%
+token,1,token or counter,T,token,no,1.0,always
