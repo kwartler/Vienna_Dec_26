@@ -8,3 +8,11 @@
 .Rproj.user
 personalFiles/
 ~$*
+
+# PDCA exercise: instructor only files, never committed (any folder, any extension)
+PDCA_Facilitator_Guide*
+**/PDCA_Facilitator_Guide*
+Disruption_Cards_Sealed*
+**/Disruption_Cards_Sealed*
+PDCA_Exercise_Deck_Instructor*
+**/PDCA_Exercise_Deck_Instructor*

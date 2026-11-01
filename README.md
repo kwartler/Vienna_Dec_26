@@ -15,6 +15,7 @@ The syllabus is in [`syllabus/`](syllabus/).
 | `docs/` | Pages published with GitHub Pages, including the Bramble+ dashboard |
 | `raw_data/` | Synthetic data for the Bramble+ dashboard and the script that generates it |
 | `lessons/day2/` | Day 2 decks and scripts: Lending Club wrap up, AI ethics and bias, adaptive mindset, OpenRouter, NLP and the GEO brand activity |
+| `pdca_exercise/` | Plan, Do, Check, Adjust group exercise: deck, AI Value Canvas, peer review sheet and scenario cards |
 
 ## Before Day 1
 
