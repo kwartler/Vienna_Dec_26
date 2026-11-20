@@ -11,7 +11,6 @@ Day 1 lab that follows the writing functions block. Students build small R funct
 | `scripts/B_triangle_example.R` | Warm up: the triangle distribution for card prices |
 | `scripts/C_mtg_investment_BASIC_STUDENT.R` | Fill in the blanks version with hints |
 | `scripts/C_mtg_investment_STUDENT.R` | Function names, inputs and steps are given; students write the bodies |
-| `scripts/C_mtg_investment_KEY.R` | Completed lab, including the sensitivity extension |
 | `scripts/D_class_pack_opening.R` | In class: price the real pulls and compare them with simulated packs |
 | `scripts/Z_mtg_functions.R` | Every lab function in one file; `source()` it if you fall behind |
 | `data/guilds_of_ravnica_10_16_18.csv` | 2018 price list: name, rarity, low, market, high |

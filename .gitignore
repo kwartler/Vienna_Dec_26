@@ -30,3 +30,6 @@ _to_delete/
 
 # Bramble+ synthetic data and generator: instructor only (the generator reveals the planted gotchas)
 lessons/day1/bramble_plus/raw_data/
+
+# Answer keys: instructor only for now, shared after class
+solutions/
