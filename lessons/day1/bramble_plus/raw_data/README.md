@@ -11,4 +11,4 @@ Synthetic data behind the Bramble+ dashboard. All figures are fictional.
 | `bramble_cohort_retention.csv` | Retention of each signup cohort by month since signup |
 | `bramble_pricing_test.csv` | Results of the December 2025 pricing test |
 | `bramble_exit_survey.csv` | Exit survey responses, July to October 2026 |
-| `synthetic_data.py` | Script that generates the files above (`python synthetic_data.py`) |
+| `synthetic_data.py` | Script that generates the files above (`python lessons/day1/bramble_plus/raw_data/synthetic_data.py`) |

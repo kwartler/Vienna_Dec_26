@@ -12,7 +12,8 @@ import pandas as pd
 RNG = np.random.default_rng(2026)
 MIX_RNG = np.random.default_rng(7)
 REGION_RNG = np.random.default_rng(11)
-OUT = '.'
+import os
+OUT = os.path.dirname(os.path.abspath(__file__))
 
 N = 24
 MONTHS = [f'{2024 + (10 + i) // 12}-{(10 + i) % 12 + 1:02d}' for i in range(N)]   # 2024-11 .. 2026-10

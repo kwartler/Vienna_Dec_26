@@ -1,7 +1,7 @@
 """
 Build the Bramble+ dashboard as a single HTML file with the data embedded.
 
-Reads the CSVs in raw_data/ and writes docs/bramble_plus/index.html.
+Reads the CSVs in ../raw_data/ and writes docs/bramble_plus/index.html.
 Run from the repository root: python lessons/day1/bramble_plus/dashboard_src/build_dashboard.py
 """
 import json
@@ -10,7 +10,7 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
-RAW = os.path.join(ROOT, 'raw_data')
+RAW = os.path.join(HERE, '..', 'raw_data')
 OUT_DIR = os.path.join(ROOT, 'docs', 'bramble_plus')
 
 

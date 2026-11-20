@@ -69,4 +69,4 @@ At market value a Reality Fracture box holds about $161 in cards, but most of th
 - Pack contents and odds: [Collecting Reality Fracture](https://magic.wizards.com/news/feature/collecting-reality-fracture), Wizards of the Coast.
 - Treatment card counts used to map collector numbers: [Reality Fracture Collector's Guide](https://realityfracture.wiki/guides/collecting/).
 - 2018 prices: Guilds of Ravnica list from [kwartler/teaching-datasets](https://github.com/kwartler/teaching-datasets), October 16, 2018.
-- Setup slides adapted from the Vienna 2025 deck `Winter/day1/E_NonTraditionalMkts.pptx`.
+- Setup slides in `F_investment_sim_mtg.pptx` adapted from last year's deck, [E_NonTraditionalMkts.pptx](https://github.com/kwartler/Vienna_25/blob/main/Winter/day1/E_NonTraditionalMkts.pptx) in the Vienna_25 repo.
