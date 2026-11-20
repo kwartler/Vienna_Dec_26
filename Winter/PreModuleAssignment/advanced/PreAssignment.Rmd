@@ -29,8 +29,8 @@ The aim of this pre-assignment is to help you get comfortable with R before clas
 
 ## Data
 
-We'll use a dataset from Kaggle called [Superstore Sales](https://www.kaggle.com/jr2ngb/superstore-data). 
-This dataset includes ~52k rows and several useful columns for our analysis, including:
+We'll use the Superstore Sales dataset, saved as a CSV in our [teaching-datasets](https://github.com/kwartler/teaching-datasets/blob/main/superstore_dataset2011-2015.csv) repository. It was originally published on Kaggle as [Superstore Sales](https://www.kaggle.com/jr2ngb/superstore-data); Step 1 loads our copy, so you do not need a Kaggle account.
+This dataset includes ~51k rows and several useful columns for our analysis, including:
 
 - "Row.ID"         
 - "Order.ID"  
