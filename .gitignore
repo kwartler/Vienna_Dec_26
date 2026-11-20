@@ -27,3 +27,6 @@ Bramble_Plus_Facilitator_Guide*
 
 # Local scratch folder for files waiting to be deleted
 _to_delete/
+
+# Bramble+ synthetic data and generator: instructor only (the generator reveals the planted gotchas)
+lessons/day1/bramble_plus/raw_data/
