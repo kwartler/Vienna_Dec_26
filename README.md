@@ -10,6 +10,7 @@ The syllabus is in [`syllabus/`](syllabus/).
 | Folder | What is in it |
 |--------|---------------|
 | `syllabus/` | Course syllabus |
+| `personalFiles/` | Your working folder: save copies of scripts and your assignments here; git ignores its contents |
 | `winter_module_assignments/PreModuleAssignment/` | Pre-module assignment for each track (basic, advanced, master), due December 11 |
 | `winter_module_assignments/PostModuleAssignment/` | Post-module used car assignment data for each track, due January 11 |
 | `lessons/day1/` | Day 1 decks and scripts: executive decision challenge, data science workflow, trees and forests, writing R functions, Lending Club case |
