@@ -6,7 +6,6 @@
 .Rhistory
 .RData
 .Rproj.user
-personalFiles/
 ~$*
 
 # PDCA exercise: instructor only files, never committed (any folder, any extension)
