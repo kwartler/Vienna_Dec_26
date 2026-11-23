@@ -241,9 +241,11 @@ nrow(mineTxt)
 mineTxt$answer <- gsub('[*#_`>|-]', ' ', mineTxt$answer)
 mineTxt$answer <- gsub('[‘’]', "'", mineTxt$answer)
 
-# Stop words: common words, the category words and words every answer uses.
-# Brand names stay in, so you can see them in the cloud next to the describing words.
+# Stop words: common words, your brand name (every answer here mentions it,
+# so it would dominate the cloud), the category words and words every
+# answer uses. Competitor names stay in.
 customStopwords <- c(stopwords('english'),
+                     strsplit(tolower(myBrand), ' ')[[1]],
                      strsplit(tolower(myCategory), ' ')[[1]],
                      'brand', 'brands', 'also', 'known', 'can', 'may', 'well',
                      'many', 'often', 'however', 'overall', 'options', 'choice')
